@@ -3,7 +3,7 @@
 ## Run
 ```bash
 cp .env.example .env   # fill in DAY1_SALT from your venue slip
-DAY1_SALT=T63D1030e4b85773 docker compose up -d --build
+DAY1_SALT=<your-salt> docker compose up -d --build
 curl http://localhost:8080/health
 ```
 

@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DAY1_SALT: T63D1030e4b85773
+      DAY1_SALT: ${DAY1_SALT}
       DATABASE_URL: postgresql://nascon:nascon@postgres:5432/nascon
       REDIS_URL: redis://redis:6379/0
       RABBITMQ_URL: amqp://nascon:nascon@rabbitmq:5672/
