@@ -12,7 +12,7 @@
 | FR-5.1  | 5-tier RBAC                          | backend/rbac/                 | tests/test_rbac.py               | TODO   |
 | NFR-3   | Concurrency correctness              | backend/store/                | tests/test_checkout_concurrency.py | TODO |
 | NFR-4   | Offline tolerance                    | mobile/, backend/offline/     | tests/test_offline_sync.py       | TODO   |
-| NFR-5   | Security (OWASP, RBAC, rate limit)   | backend/security/             | tests/test_security.py           | TODO   |
+| NFR-5   | Security (OWASP, RBAC, rate limit)   | backend/src/security/rateLimit.js, backend/src/auth/ | tests/test_zz_followups.py::test_zz_api_rate_limit_then_recovers | PARTIAL (/api/v1 rate limit + JWT pinning; RBAC matrix TODO) |
 | NFR-7   | Reproducibility                      | docker-compose.yml, backend/src/seed.js, backend/src/state/registry.js | `docker compose up -d --build`; tests/test_health.py, tests/test_day2_tier0.py | DONE (seeds on boot and reset; /health 200 in ~12 s) |
 
 
@@ -20,7 +20,7 @@
 
 | Req ID  | Description                                   | Source file(s) | Test(s) | Status |
 |---------|-----------------------------------------------|----------------|---------|--------|
-| FR-3.1  | Athlete identity / follow graph               | backend/src/routes/day2.js (`GET /api/v1/players/:id`), backend/src/web/ | tests/selenium/test_guest_grid.py | PARTIAL (profile view; follow graph not built) |
+| FR-3.1  | Athlete identity / follow graph               | backend/src/social/athletes.js, backend/src/routes/day2.js | tests/test_zz_followups.py | DONE (career + live/upcoming + VOD archive from event logs; idempotent, drift-free follow; guest follow → 403) |
 | FR-3.2  | Solo streaming, rotating keys, overlays       | backend/src/streaming/keys.js, backend/src/routes/media.js, mediamtx.yml, backend/src/web/app.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE (keys + revoke/kick + MediaMTX auth; live score overlay). VOD to MinIO not built |
 | FR-3.3  | 4-way co-stream, host handoff, unified chat   | backend/src/costream/engine.js, backend/src/realtime/chat.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE (contract + chat-{session} with monotonic seq) |
 | FR-4.1  | Dynamic QR deep-links + SVG/PNG/PDF export    | backend/src/qr/engine.js, backend/src/routes/qr.js | tests/unit/day2.test.js, tests/test_day2_tier1.py, tests/selenium/test_guest_grid.py | DONE |

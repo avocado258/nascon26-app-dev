@@ -62,7 +62,8 @@ function validateSportPayload(body) {
 
   // tie_break_order — optional
   if (body.tie_break_order !== undefined) {
-    if (!Array.isArray(body.tie_break_order) || !body.tie_break_order.every((t) => TIE_BREAK_TOKENS.includes(t))) {
+    if (!Array.isArray(body.tie_break_order) || !body.tie_break_order.every((t) => TIE_BREAK_TOKENS.includes(t))
+      || new Set(body.tie_break_order).size !== body.tie_break_order.length) {
       fields.push('tie_break_order');
     }
   }

@@ -25,7 +25,7 @@ Method: every endpoint in D1 §5.1 and D2 §5.1 was probed live on the running s
 
 | ID | Gap | Size |
 |---|---|---|
-| FR-3.1 | Athlete profile lacks career records, upcoming fixtures, VOD archive; follow/unfollow with concurrency-safe counts not built | M |
+| FR-3.1 | ✅ DONE 13:52 — career/live/upcoming/VOD from event logs; idempotent follow, guest → 403 | — |
 | FR-3.2 | VOD recording to object storage not built (MinIO dropped); revoke-severs-ingest < 2 s and glass-to-glass < 3 s never tested with a real RTMP publish (no ffmpeg on this laptop) | M |
 | FR-3.3 | No real composite mixing (URL only); host controls (signed invite tokens, mute/spotlight/kick) not built; handoff only via `simulate_host_drop`, not on WebSocket disconnect | L |
 | FR-5.2 | Realtime bus carries score + chat only; co-stream invite and order-status notifications not dispatched | S |
@@ -41,7 +41,7 @@ Method: every endpoint in D1 §5.1 and D2 §5.1 was probed live on the running s
 | FR-1.2 / FR-1.4 | League registration, standings with tie-breaks, h2h, NRR, clinched/eliminated | `/leagues`, `/standings/{id}` |
 | FR-2.2 | Roster setup, transfer/loan/release rules, audit history + loan auto-return | `/roster/setup`, `/roster/transfer`, `/roster/history/{id}` |
 | FR-2.3 / NFR-3 | Real checkout (stock reservation, mock gateway, signed PDF receipt), inventory | `/checkout` (501 stub), `/inventory/{id}` |
-| FR-5.1 / NFR-5 | RBAC JWT matrix + 7 probe routes; `/api/v1/*` rate limit (100 / 10 s, 429 + Retry-After) | `/rbac-matrix`, `/rbac/*`, `/api/v1/ping` |
+| FR-5.1 / NFR-5 | RBAC JWT matrix + 7 probe routes (rate limit + `/api/v1/ping` ✅ done 13:52) | `/rbac-matrix`, `/rbac/*` |
 | NFR-4 | Offline sync replay + conflict resolution; mobile offline queue | `/offline-sync` |
 | FR-2.1 | Club portal (venue, socials, staff, white-label tenant branding) | — |
-| Small | `tie_break_order` repeats not rejected (`sports/validate.js`); `COVERAGE.json` Day 1 areas all 0.0 | — |
+| Small | ✅ `tie_break_order` repeats rejected; ✅ `/inventory/{id}`; `COVERAGE.json` Day 1 areas still 0.0 | — |

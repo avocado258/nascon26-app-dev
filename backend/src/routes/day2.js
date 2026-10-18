@@ -10,6 +10,7 @@ const qr = require('../qr/engine');
 const dlq = require('../notify/dlq');
 const registry = require('../state/registry');
 const auth = require('../auth/jwt');
+const athletes = require('../social/athletes');
 const { guardWrite } = require('../auth/guest');
 const { ApiError, sendError } = require('../utils/errors');
 
@@ -32,6 +33,11 @@ audit.post('/moderation/test', wrap((req) => ({ status: 200, body: moderation.ru
 audit.post('/checkout', guardWrite, wrap(() => {
   throw new ApiError(501, 'NOT_IMPLEMENTED', 'Checkout is not available in this build', {});
 }));
+audit.get('/inventory/:variant_id', wrap((req) => {
+  const v = registry.state.variants.get(req.params.variant_id);
+  if (!v) throw new ApiError(404, 'VARIANT_NOT_FOUND', `Variant ${req.params.variant_id} not found`, { variant_id: req.params.variant_id });
+  return { status: 200, body: { variant_id: v.variant_id, stock: v.stock, reserved: v.reserved } };
+}));
 audit.delete('/privacy/user/:user_id', wrap((req) => {
   const userId = req.params.user_id;
   const user = registry.state.users.get(userId);
@@ -48,6 +54,7 @@ audit.delete('/privacy/user/:user_id', wrap((req) => {
 
 // ---- /api/v1 (mobile + Guest Web Player) ----
 const api = express.Router();
+api.get('/ping', (req, res) => res.status(200).json({ pong: true }));
 api.post('/auth/login', wrap((req) => ({ status: 200, body: auth.login(req.body?.email, req.body?.password) })));
 api.post('/guest/token', wrap(() => ({ status: 201, body: guest.issueToken() })));
 api.get('/guest/cart', wrap((req) => ({ status: 200, body: guest.stagedCart(String(req.query.guest_token || '')) })));
@@ -65,12 +72,10 @@ api.get('/products/pinned', wrap(() => {
   const p = registry.state.products.get('prod-jersey-001');
   return { status: 200, body: { product_id: p.product_id, name: p.name, variant_id: v.variant_id, size: v.size, price_minor: v.price_minor, currency: v.currency, stock: v.stock } };
 }));
-api.get('/players/:id', wrap((req) => {
-  const p = registry.state.players.get(req.params.id);
-  if (!p) throw new ApiError(404, 'PLAYER_NOT_FOUND', `Player ${req.params.id} not found`, { player_id: req.params.id });
-  const club = registry.state.clubs.get(p.club_id);
-  return { status: 200, body: { player_id: p.player_id, name: p.name, club: club.name, club_id: p.club_id, tenant_id: p.tenant_id } };
-}));
+api.get('/players/:id', wrap((req) => ({ status: 200, body: athletes.profile(req.params.id) })));
+// Following an athlete is a protected write: guests get 403 GUEST_WRITE_FORBIDDEN (D2 FR-4.3).
+api.post('/athletes/:id/follow', guardWrite, auth.requireMember, wrap((req) => ({ status: 200, body: athletes.setFollow(req.params.id, req.user.user_id, true) })));
+api.delete('/athletes/:id/follow', guardWrite, auth.requireMember, wrap((req) => ({ status: 200, body: athletes.setFollow(req.params.id, req.user.user_id, false) })));
 api.get('/clubs/:id', wrap((req) => {
   const c = registry.state.clubs.get(req.params.id);
   if (!c) throw new ApiError(404, 'NOT_FOUND', `Club ${req.params.id} not found`, { club_id: req.params.id });

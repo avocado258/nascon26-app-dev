@@ -236,7 +236,9 @@
       const dt = document.createElement('dt');
       dt.textContent = k.replace(/_/g, ' ');
       const dd = document.createElement('dd');
-      dd.textContent = Array.isArray(v) ? v.map((x) => (typeof x === 'object' ? x.name || x.player_id : x)).join(', ') || '—' : String(v ?? '—');
+      if (Array.isArray(v)) dd.textContent = v.map((x) => (typeof x === 'object' ? x.name || x.player_id || x.match_id : x)).join(', ') || '—';
+      else if (v && typeof v === 'object') dd.textContent = Object.entries(v).map(([a, b]) => `${a.replace(/_/g, ' ')} ${b}`).join(' · ');
+      else dd.textContent = String(v ?? '—');
       dl.append(dt, dd);
     }
     setConn('live');

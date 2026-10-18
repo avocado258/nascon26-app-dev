@@ -200,5 +200,6 @@ function score(matchId) {
 }
 
 const getMatch = (matchId) => matches.get(matchId);
+const listMatches = () => [...matches.values()];
 
-module.exports = { reset, append, score, getMatch, project };
+module.exports = { reset, append, score, getMatch, listMatches, project };
