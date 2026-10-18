@@ -1,3 +1,26 @@
+# Day 2 status (2026-10-18, 13:30 PKT)
+
+| Push | SHA | Window |
+|---|---|---|
+| 11:20 | `86500bc` | W1 |
+| 11:49 | `50bb624` Tier 0 | W2 |
+| 12:08 | `dc96b7f` Tier 1 | W2 |
+| 12:48 | `8f7a79c` Tier 2–3 | W3 |
+| 13:30 | `afbb16d` mobile app, CSS fix, CI dependency fix | W3 |
+| ≥13:45 | this status update | W4 |
+
+Verified:
+- Clean-copy compose with both salts from env: `/health` 200 in 12–15 s, Selenium Grid ready with 3 nodes in 16–18 s.
+- 26 unit tests (Phase I + II), 160 API contract tests with DAY2 signatures recomputed in Python, Selenium 6/6 (Chrome + Firefox, `-n 3`), k6 spec profile 0.00% failed (p95 154–239 ms).
+- Android app on SM-A035F (API 33): both spec deep links open the right screen in 245–490 ms cold; physical QR scan → `/q/c-alpha-1` → `/web/clubs/club-alpha-1`.
+- `COVERAGE_DAY2.json` measured: streaming 89.6, costream/qr/guest/moderation 100.
+
+Open:
+- Not built: VOD recording (MinIO dropped), FR-3.1 follow graph, the mobile broadcaster UI, an Appium server on the CI runner (the suite skips cleanly without one).
+- Ambiguity decisions A1–A16 are in `docs/ROADMAP.md` §1.
+
+---
+
 # NaSCon '26 — Phase I build status (audited 2026-10-18 02:14)
 
 Sources: [NaSCon_26_App_Dev_Part_1.md](NaSCon_26_App_Dev_Part_1.md) (spec), [Official_Participant_Rules_Booklet.md](Official_Participant_Rules_Booklet.md) (rules).
