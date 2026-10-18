@@ -23,6 +23,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # Unit tests require backend modules on the runner (the Docker image has its own copy).
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
 
       - uses: actions/setup-python@v5
         with:
