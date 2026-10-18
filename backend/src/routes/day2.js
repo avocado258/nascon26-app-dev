@@ -11,6 +11,7 @@ const dlq = require('../notify/dlq');
 const registry = require('../state/registry');
 const auth = require('../auth/jwt');
 const athletes = require('../social/athletes');
+const { signDay2 } = require('../utils/sign');
 const { guardWrite } = require('../auth/guest');
 const { ApiError, sendError } = require('../utils/errors');
 
@@ -76,6 +77,25 @@ api.get('/players/:id', wrap((req) => ({ status: 200, body: athletes.profile(req
 // Following an athlete is a protected write: guests get 403 GUEST_WRITE_FORBIDDEN (D2 FR-4.3).
 api.post('/athletes/:id/follow', guardWrite, auth.requireMember, wrap((req) => ({ status: 200, body: athletes.setFollow(req.params.id, req.user.user_id, true) })));
 api.delete('/athletes/:id/follow', guardWrite, auth.requireMember, wrap((req) => ({ status: 200, body: athletes.setFollow(req.params.id, req.user.user_id, false) })));
+// Host-signed co-stream invites (FR-3.3), pushed on the invitee's notify channel; undeliverable
+// invites retry 3x and land in the DLQ (FR-5.2).
+api.post('/costream/:id/invite', guardWrite, auth.requireMember, wrap((req) => {
+  const session = costream.get(req.params.id);
+  if (!session) throw new ApiError(404, 'STREAM_NOT_FOUND', `Co-stream ${req.params.id} not found`, { session_id: req.params.id });
+  const invitee = req.body?.player_id;
+  if (typeof invitee !== 'string' || !invitee) throw new ApiError(400, 'VALIDATION_ERROR', 'player_id is required', { fields: ['player_id'] });
+  if (!registry.state.players.has(invitee)) throw new ApiError(404, 'PLAYER_NOT_FOUND', `Player ${invitee} not found`, { player_id: invitee });
+  if (req.user.role !== 'super_admin' && req.user.player_id !== session.active_host) {
+    throw new ApiError(403, 'FORBIDDEN', 'Only the active host can invite participants', { session_id: session.session_id });
+  }
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const claims = { session_id: session.session_id, invitee, expires_at: expiresAt };
+  const inviteToken = `${Buffer.from(JSON.stringify(claims)).toString('base64url')}.${signDay2(session.session_id, claims)}`;
+  const event = { type: 'costream.invite', target: invitee, session_id: session.session_id, invite_token: inviteToken, expires_at: expiresAt };
+  const outcome = dlq.dispatch(event, () => hub.notifyUser(invitee, event));
+  return { status: 201, body: { session_id: session.session_id, player_id: invitee, invite_token: inviteToken, expires_at: expiresAt,
+    delivered: outcome.delivered, attempts: outcome.attempts.length, dlq_depth: dlq.depth() } };
+}));
 api.get('/clubs/:id', wrap((req) => {
   const c = registry.state.clubs.get(req.params.id);
   if (!c) throw new ApiError(404, 'NOT_FOUND', `Club ${req.params.id} not found`, { club_id: req.params.id });

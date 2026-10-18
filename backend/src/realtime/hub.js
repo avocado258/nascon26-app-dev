@@ -4,7 +4,7 @@ const bus = require('./bus');
 const chat = require('./chat');
 const engine = require('../scoring/engine');
 
-const subscribers = { match: new Map(), chat: new Map() }; // kind -> id -> Set<send(fn)>
+const subscribers = { match: new Map(), chat: new Map(), notify: new Map() }; // kind -> id -> Set<send(fn)>
 const stats = { ws: 0, sse: 0 };
 
 function scorePayload(matchId) {
@@ -27,7 +27,7 @@ function subscribe(kind, id, send) {
   if (kind === 'match') {
     const p = scorePayload(id);
     if (p) send(p);
-  } else {
+  } else if (kind === 'chat') {
     for (const m of chat.history(id)) send({ type: 'chat', ...m });
   }
   return () => map.get(id)?.delete(send);
@@ -45,7 +45,15 @@ bus.on('match', (matchId) => {
 });
 bus.on('chat', (roomId, msg) => fanout('chat', roomId, { type: 'chat', ...msg }));
 
-const ROUTES = [[/^\/ws\/matches\/([^/?]+)/, 'match'], [/^\/ws\/chat\/([^/?]+)/, 'chat']];
+const ROUTES = [[/^\/ws\/matches\/([^/?]+)/, 'match'], [/^\/ws\/chat\/([^/?]+)/, 'chat'], [/^\/ws\/notify\/([^/?]+)/, 'notify']];
+
+// Per-user notification channel (FR-5.2). Returns true only if a live subscriber received it.
+function notifyUser(userId, payload) {
+  const set = subscribers.notify.get(userId);
+  if (!set || set.size === 0) return false;
+  for (const send of set) send(payload);
+  return true;
+}
 
 function attach(server) {
   const wss = new WebSocketServer({ noServer: true });
@@ -74,4 +82,4 @@ function sse(kind) {
   };
 }
 
-module.exports = { attach, sse, stats, scorePayload };
+module.exports = { attach, sse, stats, scorePayload, notifyUser };

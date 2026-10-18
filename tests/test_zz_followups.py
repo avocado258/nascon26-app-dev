@@ -3,6 +3,7 @@
 Named test_zz_* so the rate-limit burst runs last and waits out its window before other suites run.
 """
 import concurrent.futures as cf
+import json
 import time
 
 import pytest
@@ -64,6 +65,29 @@ def test_tie_break_order_repeats_rejected():
             "roster": {"min_squad_size": 7, "max_squad_size": 12}, "tie_break_order": ["h2h_points", "h2h_points"]}
     r = post("/audit/v1/sports", body)
     assert r.status_code == 400 and "tie_break_order" in r.json()["error"]["details"]["fields"]
+
+
+def test_costream_invite_push_and_dlq():
+    websocket = pytest.importorskip("websocket")
+    post("/audit/v1/costream/session", {"session_id": "cs-session-101", "host_player_id": "player-alpha-1",
+                                        "participants": ["player-alpha-1", "player-alpha-2"], "layout": "grid_2"})
+    host = member("player@nascon.test")
+    # Offline invitee: 3 delivery attempts, then dead-lettered.
+    r = post("/api/v1/costream/cs-session-101/invite", {"player_id": "player-beta-2"}, host)
+    assert r.status_code == 201, r.text
+    b = r.json()
+    assert (b["delivered"], b["attempts"], b["dlq_depth"]) == (False, 3, 1)
+    # Online invitee receives the signed invite on its notify channel.
+    ws = websocket.create_connection("ws://localhost:8080/ws/notify/player-beta-1", timeout=5)
+    r = post("/api/v1/costream/cs-session-101/invite", {"player_id": "player-beta-1"}, host).json()
+    msg = json.loads(ws.recv())
+    ws.close()
+    assert r["delivered"] is True and msg["type"] == "costream.invite" and msg["invite_token"] == r["invite_token"]
+    # Boundaries: guest 403 guest-block, non-host 403 FORBIDDEN, unknown session 404.
+    g = post("/api/v1/costream/cs-session-101/invite", {"player_id": "player-beta-1"}, {"Authorization": "Bearer guest_anon_tok_7721"})
+    assert g.json()["error"]["code"] == "GUEST_WRITE_FORBIDDEN"
+    assert post("/api/v1/costream/cs-session-101/invite", {"player_id": "player-beta-1"}, member()).json()["error"]["code"] == "FORBIDDEN"
+    assert post("/api/v1/costream/nope/invite", {"player_id": "player-beta-1"}, host).json()["error"]["code"] == "STREAM_NOT_FOUND"
 
 
 def test_zz_api_rate_limit_then_recovers():

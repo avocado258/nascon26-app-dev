@@ -22,12 +22,12 @@
 |---------|-----------------------------------------------|----------------|---------|--------|
 | FR-3.1  | Athlete identity / follow graph               | backend/src/social/athletes.js, backend/src/routes/day2.js | tests/test_zz_followups.py | DONE (career + live/upcoming + VOD archive from event logs; idempotent, drift-free follow; guest follow → 403) |
 | FR-3.2  | Solo streaming, rotating keys, overlays       | backend/src/streaming/keys.js, backend/src/routes/media.js, mediamtx.yml, backend/src/web/app.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE (keys + revoke/kick + MediaMTX auth; live score overlay). VOD to MinIO not built |
-| FR-3.3  | 4-way co-stream, host handoff, unified chat   | backend/src/costream/engine.js, backend/src/realtime/chat.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE (contract + chat-{session} with monotonic seq) |
+| FR-3.3  | 4-way co-stream, host handoff, unified chat   | backend/src/costream/engine.js, backend/src/realtime/chat.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE (contract, chat-{session} with monotonic seq, host-signed invite tokens via `POST /api/v1/costream/:id/invite`) |
 | FR-4.1  | Dynamic QR deep-links + SVG/PNG/PDF export    | backend/src/qr/engine.js, backend/src/routes/qr.js | tests/unit/day2.test.js, tests/test_day2_tier1.py, tests/selenium/test_guest_grid.py | DONE |
 | FR-4.2  | Zero-account guest experience                 | backend/src/guest/engine.js, backend/src/web/ | tests/selenium/test_guest_grid.py | DONE |
 | FR-4.3  | Server-enforced read-only guest boundary      | backend/src/auth/guest.js (guardWrite on events/checkout/chat) | tests/test_day2_tier0.py, tests/test_day2_tier1.py, tests/selenium/test_guest_grid.py | DONE |
 | FR-4.4  | Progressive registration + atomic cart merge  | backend/src/guest/engine.js, backend/src/auth/jwt.js, backend/src/web/app.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE |
-| FR-5.2  | Notification bus + DLQ (3 retries)            | backend/src/notify/dlq.js, backend/src/realtime/bus.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE |
+| FR-5.2  | Notification bus + DLQ (3 retries)            | backend/src/notify/dlq.js, backend/src/realtime/hub.js (`/ws/notify/{user}`) | tests/unit/day2.test.js, tests/test_day2_tier1.py, tests/test_zz_followups.py | DONE (score, chat, co-stream invites; offline invitee → DLQ) |
 | FR-5.3  | Chat moderation (leetspeak, flood, rate)      | backend/src/moderation/engine.js, backend/src/routes/day2.js | tests/unit/day2.test.js, tests/test_day2_tier1.py | DONE |
 | NFR-1   | Score push p95 < 500 ms (25 WS clients)       | backend/src/realtime/hub.js | tests/test_day2_tier1.py::test_score_broadcast_reaches_25_ws_clients_fast, selenium test 3 | DONE |
 | NFR-2   | 500 viewers + 50 chat posters, 0% 5xx         | tests/k6_load.js | k6 run (0.00% failed, p95 239 ms locally) | DONE |

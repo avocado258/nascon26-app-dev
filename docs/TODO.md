@@ -27,8 +27,8 @@ Method: every endpoint in D1 §5.1 and D2 §5.1 was probed live on the running s
 |---|---|---|
 | FR-3.1 | ✅ DONE 13:52 — career/live/upcoming/VOD from event logs; idempotent follow, guest → 403 | — |
 | FR-3.2 | VOD recording to object storage not built (MinIO dropped); revoke-severs-ingest < 2 s and glass-to-glass < 3 s never tested with a real RTMP publish (no ffmpeg on this laptop) | M |
-| FR-3.3 | No real composite mixing (URL only); host controls (signed invite tokens, mute/spotlight/kick) not built; handoff only via `simulate_host_drop`, not on WebSocket disconnect | L |
-| FR-5.2 | Realtime bus carries score + chat only; co-stream invite and order-status notifications not dispatched | S |
+| FR-3.3 | No real composite mixing (URL only); signed invite tokens ✅ (13:55); mute/spotlight/kick not built; handoff only via `simulate_host_drop`, not on WebSocket disconnect | L |
+| FR-5.2 | ✅ co-stream invites dispatched on `/ws/notify/{user}` with DLQ fallback (13:55); order-status notifications still missing (no checkout) | S |
 | Mobile (20% pool) | App is a WebView shell: no native solo broadcaster (WHIP/RTMP), no 4-way split-view UI, no push notifications | L |
 | QA | Appium suite never run against a live Appium server (skips in CI); cross-surface test unproven | S |
 | NFR-8 | WCAG checked by design + Selenium DOM checks only; no automated contrast/axe audit | S |
