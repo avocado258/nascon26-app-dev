@@ -8,6 +8,9 @@ const sportsRoutes = require('./routes/sports');
 const fixturesRoutes = require('./routes/fixtures');
 const eventsRoutes = require('./routes/events');
 const mediaRoutes = require('./routes/media');
+const day2 = require('./routes/day2');
+const qrRoutes = require('./routes/qr');
+const hub = require('./realtime/hub');
 const { seedBaseline } = require('./seed');
 const { redisPing, mediaReady } = require('./utils/deps');
 const { errorBody, sendError } = require('./utils/errors');
@@ -20,6 +23,11 @@ app.use('/audit/v1/fixtures', fixturesRoutes);
 app.use('/audit/v1/events', eventsRoutes.events);
 app.use('/audit/v1/score', eventsRoutes.score);
 app.use('/internal/media', mediaRoutes);
+app.use('/audit/v1/qr', qrRoutes.audit);
+app.use('/audit/v1', day2.audit);
+app.use('/api/v1', day2.api);
+app.use('/q', qrRoutes.short);
+app.get('/metrics', day2.metrics);
 
 
 let seeded = false;
@@ -37,6 +45,8 @@ app.get('/health', async (req, res) => {
 });
 
 app.use('/audit/v1/reset', resetRouter(() => { seeded = true; }));
+
+app.use((req, res) => res.status(404).json(errorBody('NOT_FOUND', `No route for ${req.method} ${req.path}`)));
 
 // Body-parser failures must use the uniform error body (spec 5.2), not Express's HTML page.
 app.use((err, req, res, next) => {
@@ -57,10 +67,11 @@ async function migrate() {
 }
 
 migrate()
-  .then(seedBaseline)
+  .then(() => seedBaseline())
   .then(() => {
     seeded = true;
-    app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+    const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+    hub.attach(server);
   })
   .catch((err) => {
     // Exit so the container's restart policy retries instead of hanging without a listener.

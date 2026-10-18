@@ -6,6 +6,7 @@ services:
     environment:
       DAY1_SALT: ${DAY1_SALT}
       DAY2_SALT: ${DAY2_SALT}
+      JWT_SECRET: ${JWT_SECRET:-nascon-dev-jwt-secret}
       DATABASE_URL: postgresql://nascon:nascon@postgres:5432/nascon
       REDIS_URL: redis://redis:6379/0
       RABBITMQ_URL: amqp://nascon:nascon@rabbitmq:5672/

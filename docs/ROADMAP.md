@@ -12,7 +12,7 @@ Grading: 80% backend + QA infra (contracts, signatures, media, load, grid), 20% 
 | C3 | `DAY2_SALT` from env only. A hard-coded salt voids the module (`D2:904`). Compose forwards `DAY1_SALT: ${DAY1_SALT}` and `DAY2_SALT: ${DAY2_SALT}`. |
 | C4 | Ports: API + `/web/*` + `/metrics` 8080; RTMP 1935; HLS 8888; WebRTC 8889; Selenium hub 4444 (≥3 ready nodes); Appium 4723 (`D2:656-675`). |
 | C5 | `DAY1_SALT=… DAY2_SALT=… docker compose up -d --build` → every container healthy and `/health` 200 within 120 s (`D2:267`, `D2:900`). |
-| C6 | Push checkpoints (GitHub server time, PKT): W1 10:15–11:30 ✅ `86500bc`; W2 11:30–12:45; W3 12:45–13:45; W4 13:45–14:00. **Final push ≤ 14:05:00** (written, binding, `D2:12`, `D2:89`). The verbal 14:20 extension conflicts with the binding document (`D2:22`): treat 14:05 as the deadline unless the organizers confirm 14:20 in writing. |
+| C6 | Push checkpoints (GitHub server time, PKT): W1 10:15–11:30 ✅ `86500bc`; W2 11:30–12:45 ✅ `50bb624`; W3 12:45–13:45; W4 13:45–14:00. **Final push ≤ 14:05:00** (written, binding, `D2:12`, `D2:89`). The verbal 14:20 extension conflicts with the binding document (`D2:22`): treat 14:05 as the deadline unless the organizers confirm 14:20 in writing. |
 | C7 | History must descend from `3001bc2` (`git merge-base --is-ancestor`). Never rewrite history. |
 | C8 | Phase I regression: Phase I unit tests and `/audit/v1/reset` probes must keep passing (`D2:46`). Keep the Day 1 reset response keys. |
 | C9 | All state resets in `seedBaseline()` (`backend/src/seed.js`), which runs on boot and on `/audit/v1/reset`. |
@@ -36,21 +36,24 @@ Grading: 80% backend + QA infra (contracts, signatures, media, load, grid), 20% 
 | A11 | QR for entities without a seeded mapping | Created lazily for any existing `match-*`, `club-*`, `player-*`, `cs-session-*`; `short_code = "q-" + sha256(entity_id)[0:10]`; stable once created. |
 | A12 | Unknown `/q/{short_code}` | 404 `QR_NOT_FOUND` JSON. |
 | A13 | `/health` deps (`D2:242`) | DB + Redis PING + MediaMTX API (`http://mediamtx:9997/v3/config/global/get`), each with a 1 s timeout, plus the seeded flag. |
+| A15 | Co-stream check order with only 4 seeded players | Capacity (409 `COSTREAM_SESSION_FULL`) is checked right after schema, before player existence, so the catalogue code is reachable. |
+| A16 | Chat sender rate limit (3 msgs / 2 s) | Applied to live chat `POST /api/v1/chat` only (429 `RATE_LIMITED`), never to `/audit/v1/moderation/test`: the edge-case-3 probe sends 10 identical concurrent requests and must return identical results. |
 | A14 | Revoked key on ingest | MediaMTX `authMethod: http` → `POST /internal/media/auth`: active key → 200; revoked → 409 `KEY_REVOKED`; unknown → 404. Revoke/rotate also kicks live sessions via the MediaMTX API (`/v3/rtmpconns/kick/{id}`, `/v3/webrtcsessions/kick/{id}`). |
 
 ## 2. Execution order
 
 Tiers are ordered by points per hour. Within a tier, packages own disjoint files and can run in parallel. Every package: implement → unit test (`tests/unit/`) → pytest contract test (`tests/test_<area>.py`) → push.
 
-### Tier 0 — foundation (sequential, target ≤ 12:05, push for W2)
+### Tier 0 — foundation ✅ DONE `50bb624` (gate: /health 200 at 15 s, grid 3 nodes at 18 s, 116 API + 17 unit tests)
 
 **P0.1 Compose + infra.** Files: `docker-compose.yml`, `mediamtx.yml`, `.env.example`.
 - Add `DAY2_SALT: ${DAY2_SALT}` to backend env.
 - `mediamtx` service `bluenviron/mediamtx:1.9.1` (pre-pulled), ports 1935/8888/8889 (+8889/udp, 8189/udp), API 9997 internal, config mounted, `authMethod: http`, `authHTTPAddress: http://backend:8080/internal/media/auth`.
-- `minio` (`minio/minio:RELEASE.2024-09-22T00-33-43Z`; it failed to pull on Day 1 — retry `docker pull` now; if it still fails, use `minio/minio:latest`) with healthcheck; bucket created by the backend on boot.
+- MinIO: dropped (image unavailable on Docker Hub, quay.io and Bitnami; treated as a decoy). VOD recording is out of scope.
 - Selenium per `D2:682-723`: hub + `node-chrome-1`, `node-chrome-2`, `node-firefox`, each `shm_size: "1gb"`, `SE_START_VNC=false`. Use tag `4.24.0` (pre-pulled; spec text says 4.25.0, which is not graded).
 - Healthchecks on every service; backend `depends_on` postgres/redis/mediamtx healthy.
 - Done: clean-copy `up -d --build` < 120 s to `/health` 200; `curl :4444/status` → `value.ready==true`, nodes ≥ 3.
+- Gate note: `selenium-hub` has a fixed `container_name`; run `docker compose down` on the main stack before starting a gate project.
 
 **P0.2 Day 2 core utils + seed.** Files: `backend/src/utils/sign.js`, `backend/src/seed.js`, `backend/src/day2/store.js`, `backend/src/auth/guest.js`.
 - `canonical(obj)` (recursive key sort, `,`/`:` separators, no ASCII escaping) and `signDay2(entityId, payload)` = HMAC-SHA256(`DAY2_SALT`, `entityId + "|" + canonical(payload)`) → lowercase hex. Also `signDay1` for Phase I.
