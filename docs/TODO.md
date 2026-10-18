@@ -11,8 +11,8 @@ Method: every endpoint in D1 §5.1 and D2 §5.1 was probed live on the running s
 
 ## A. Before final push (14:05 hard lock; 14:20 only if confirmed in writing)
 
-1. **Write `ADR.md` at repo root: 8 short ADRs** (rules booklet §4.5: defended in the Top-8 viva at 14:30). Candidates: in-memory stores reset by `seedBaseline()`; event-sourced match log; canonical-JSON HMAC signing with env salts; guest boundary enforced server-side before validation; synchronous single-thread atomicity for cart merge / moderation (edge cases 3–4); MediaMTX + HTTP auth hook for key revocation; co-stream capacity checked before existence (A15); WebView shell app for deep links. ~15 min.
-2. Regenerate `tests/reports/*` on the final commit (contract, Selenium, Appium, k6) and commit. ~5 min.
+1. ✅ DONE 13:45 — **`ADR.md` at repo root: 8 short ADRs** (rules booklet §4.5: defended in the Top-8 viva at 14:30). Candidates: in-memory stores reset by `seedBaseline()`; event-sourced match log; canonical-JSON HMAC signing with env salts; guest boundary enforced server-side before validation; synchronous single-thread atomicity for cart merge / moderation (edge cases 3–4); MediaMTX + HTTP auth hook for key revocation; co-stream capacity checked before existence (A15); WebView shell app for deep links. ~15 min.
+2. ✅ DONE 13:45 — reports regenerated: contract 160/160, Selenium 6/6, Appium skipped (no server), k6 0.00% failed p95 108 ms.
 3. Final push before 14:05 and confirm the Actions run is green. ~3 min.
 
 ## B. Before the viva (14:30) — prepare, not code
