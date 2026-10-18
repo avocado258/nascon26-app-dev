@@ -12,7 +12,7 @@ Grading: 80% backend + QA infra (contracts, signatures, media, load, grid), 20% 
 | C3 | `DAY2_SALT` from env only. A hard-coded salt voids the module (`D2:904`). Compose forwards `DAY1_SALT: ${DAY1_SALT}` and `DAY2_SALT: ${DAY2_SALT}`. |
 | C4 | Ports: API + `/web/*` + `/metrics` 8080; RTMP 1935; HLS 8888; WebRTC 8889; Selenium hub 4444 (≥3 ready nodes); Appium 4723 (`D2:656-675`). |
 | C5 | `DAY1_SALT=… DAY2_SALT=… docker compose up -d --build` → every container healthy and `/health` 200 within 120 s (`D2:267`, `D2:900`). |
-| C6 | Push checkpoints (GitHub server time, PKT): W1 10:15–11:30 ✅ `86500bc`; W2 11:30–12:45 ✅ `50bb624`; W3 12:45–13:45; W4 13:45–14:00. **Final push ≤ 14:05:00** (written, binding, `D2:12`, `D2:89`). The verbal 14:20 extension conflicts with the binding document (`D2:22`): treat 14:05 as the deadline unless the organizers confirm 14:20 in writing. |
+| C6 | Push checkpoints (GitHub server time, PKT): W1 10:15–11:30 ✅ `86500bc`; W2 11:30–12:45 ✅ `50bb624`; W3 12:45–13:45 ✅ `8f7a79c` 12:48; W4 13:45–14:00 (still needed). **Final push ≤ 14:05:00** (written, binding, `D2:12`, `D2:89`). The verbal 14:20 extension conflicts with the binding document (`D2:22`): treat 14:05 as the deadline unless the organizers confirm 14:20 in writing. |
 | C7 | History must descend from `3001bc2` (`git merge-base --is-ancestor`). Never rewrite history. |
 | C8 | Phase I regression: Phase I unit tests and `/audit/v1/reset` probes must keep passing (`D2:46`). Keep the Day 1 reset response keys. |
 | C9 | All state resets in `seedBaseline()` (`backend/src/seed.js`), which runs on boot and on `/audit/v1/reset`. |
@@ -118,7 +118,7 @@ Tiers are ordered by points per hour. Within a tier, packages own disjoint files
 - WCAG 2.1 AA: contrast ≥ 4.5:1, focusable controls in DOM order, `aria-label` on media controls, targets ≥ 48×48 px, `<html lang>`, visible focus ring.
 - `POST /api/v1/auth/login {email,password}` → JWT (demo users, `Nascon@26`).
 
-### Tier 3 — QA harness + CI (target ≤ 13:55)
+### Tier 3 — QA harness + CI ✅ DONE `8f7a79c` (contract 160, Selenium 6/6, Appium skips without device, k6 0.00% failed p95 ~154 ms, COVERAGE_DAY2 measured)
 
 **P3.1 Selenium** ✅ `tests/selenium/test_guest_grid.py` (each test uses its own match where it mutates state, so parallel workers never race): `webdriver.Remote("http://localhost:4444/wd/hub")`, browsers chrome and firefox; base URL `http://backend:8080` (inside the grid network); the 3 tests from `D2:755-763`; run `pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml`. Add `pytest-xdist` and `selenium` to `tests/requirements.txt`.
 **P3.2 k6** `tests/k6_load.js` verbatim from `D2:795-846`. Run `docker run --rm --network host -v "$PWD/tests:/tests" grafana/k6:0.54.0 run --summary-export=/tests/reports/k6-summary.json /tests/k6_load.js`; must pass the thresholds.
@@ -126,7 +126,7 @@ Tiers are ordered by points per hour. Within a tier, packages own disjoint files
 **P3.4 CI** `.github/workflows/autograde.yml` on push to main: checkout (fetch-depth 0) → ancestry check vs `3001bc2` → `docker compose up -d --build` with `DAY1_SALT`/`DAY2_SALT` from repo secrets (fallback dummy) → wait for `/health` and grid ready → `./run_tests.sh` → Selenium → k6 → upload `tests/reports/`.
 **P3.5 Artefacts**: commit generated `tests/reports/*`; `COVERAGE_DAY2.json` (A6) from c8 per module dir — declare measured values only; `TRACEABILITY.md` rows FR-3.1, 3.2, 3.3, 4.1–4.4, 5.2, 5.3, NFR-1, 2, 6, 8, 9 with paths + tests; README Day 2 run section.
 
-### Tier 4 — Native mobile (only after Tier 3 is pushed)
+### Tier 4 — Native mobile ✅ BUILT (`mobile/release/app-release.apk`, Java WebView shell, package `com.nascon.live`). Verified on SM-A035F (API 33): both spec deep links open the right route in 184–292 ms (AOT-compiled). Scanner crash fixed (androidx.core); on-device re-check pending (phone locked)
 
 **P4.1 Android shell app** `mobile/` (Kotlin, single Activity + WebView), output `mobile/release/app-release.apk`:
 - Manifest intent-filter `nascon` scheme exactly as `D2:772-779`; `nascon://entity/{id}` → WebView `/web/matches/{id}/live` (or player/club route); `nascon://stream/{id}` → `/web/costream/{id}`. No login screen on deep link. Foreground in < 2 s.

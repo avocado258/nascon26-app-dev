@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Exposes the loaded route to Appium (tests/appium/test_mobile_deeplink.py). -->
+    <item name="route" type="id" />
+</resources>

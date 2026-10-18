@@ -1,0 +1,41 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.nascon.live'
+    compileSdk 37
+
+    defaultConfig {
+        applicationId 'com.nascon.live'
+        minSdk 29
+        targetSdk 34
+        versionCode 2
+        versionName '2.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Competition build: signed with the local debug key so the APK installs directly.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    // Release lint pulls ~500 MB of lint jars; not needed for the competition build.
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    // zxing-android-embedded uses ContextCompat but does not ship androidx.core itself.
+    implementation 'androidx.core:core:1.13.1'
+}
