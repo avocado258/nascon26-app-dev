@@ -126,7 +126,7 @@ Tiers are ordered by points per hour. Within a tier, packages own disjoint files
 **P3.4 CI** `.github/workflows/autograde.yml` on push to main: checkout (fetch-depth 0) → ancestry check vs `3001bc2` → `docker compose up -d --build` with `DAY1_SALT`/`DAY2_SALT` from repo secrets (fallback dummy) → wait for `/health` and grid ready → `./run_tests.sh` → Selenium → k6 → upload `tests/reports/`.
 **P3.5 Artefacts**: commit generated `tests/reports/*`; `COVERAGE_DAY2.json` (A6) from c8 per module dir — declare measured values only; `TRACEABILITY.md` rows FR-3.1, 3.2, 3.3, 4.1–4.4, 5.2, 5.3, NFR-1, 2, 6, 8, 9 with paths + tests; README Day 2 run section.
 
-### Tier 4 — Native mobile ✅ BUILT (`mobile/release/app-release.apk`, Java WebView shell, package `com.nascon.live`). Verified on SM-A035F (API 33): both spec deep links open the right route in 184–292 ms (AOT-compiled). Scanner crash fixed (androidx.core); on-device re-check pending (phone locked)
+### Tier 4 — Native mobile ✅ BUILT (`mobile/release/app-release.apk`, Java WebView shell, package `com.nascon.live`). Verified on SM-A035F (API 33): both spec deep links open the right route in 184–292 ms (AOT-compiled). QR scanner verified on device: physical scan of the club-alpha-1 poster → /q/c-alpha-1 → /web/clubs/club-alpha-1
 
 **P4.1 Android shell app** `mobile/` (Kotlin, single Activity + WebView), output `mobile/release/app-release.apk`:
 - Manifest intent-filter `nascon` scheme exactly as `D2:772-779`; `nascon://entity/{id}` → WebView `/web/matches/{id}/live` (or player/club route); `nascon://stream/{id}` → `/web/costream/{id}`. No login screen on deep link. Foreground in < 2 s.

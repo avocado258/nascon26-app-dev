@@ -4,6 +4,8 @@
   --accent: #ffd34d; --accent-ink: #14110a; --live: #ff6b6b; --ok: #6ee7a8; --error: #ffb4b4;
 }
 * { box-sizing: border-box; }
+/* Author display rules (e.g. .layout grid) must never override the hidden attribute. */
+[hidden] { display: none !important; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; }
 .skip { position: absolute; left: -999px; top: 8px; background: var(--accent); color: var(--accent-ink); padding: 12px 16px; z-index: 10; }
 .skip:focus { left: 8px; }
