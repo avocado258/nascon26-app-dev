@@ -3,6 +3,7 @@ const { WebSocketServer } = require('ws');
 const bus = require('./bus');
 const chat = require('./chat');
 const engine = require('../scoring/engine');
+const costream = require('../costream/engine');
 
 const subscribers = { match: new Map(), chat: new Map(), notify: new Map() }; // kind -> id -> Set<send(fn)>
 const stats = { ws: 0, sse: 0 };
@@ -58,6 +59,21 @@ function notifyUser(userId, payload) {
 function attach(server) {
   const wss = new WebSocketServer({ noServer: true });
   server.on('upgrade', (req, socket, head) => {
+    // Co-stream presence: /ws/costream/{session_id}/{player_id}; closing it triggers host handoff.
+    const presence = /^\/ws\/costream\/([^/?]+)\/([^/?]+)/.exec(req.url);
+    if (presence) {
+      return wss.handleUpgrade(req, socket, head, (ws) => {
+        stats.ws += 1;
+        const [sessionId, playerId] = [decodeURIComponent(presence[1]), decodeURIComponent(presence[2])];
+        ws.send(JSON.stringify({ type: 'costream', ...(costream.get(sessionId) || { session_id: sessionId, status: 'unknown' }) }));
+        ws.on('close', () => {
+          stats.ws -= 1;
+          const next = costream.dropParticipant(sessionId, playerId);
+          if (next) chat.publish(next.chat_room_id, { message_id: `sys-${Date.now()}`, sender: 'system', text: `${playerId} left; host is ${next.active_host || 'none'}`, flagged: false, reason: null });
+        });
+        ws.on('error', () => ws.close());
+      });
+    }
     const hit = ROUTES.map(([re, kind]) => [re.exec(req.url), kind]).find(([m]) => m);
     if (!hit) return socket.destroy();
     wss.handleUpgrade(req, socket, head, (ws) => {

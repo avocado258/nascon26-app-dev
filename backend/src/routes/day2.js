@@ -79,6 +79,11 @@ api.post('/athletes/:id/follow', guardWrite, auth.requireMember, wrap((req) => (
 api.delete('/athletes/:id/follow', guardWrite, auth.requireMember, wrap((req) => ({ status: 200, body: athletes.setFollow(req.params.id, req.user.user_id, false) })));
 // Host-signed co-stream invites (FR-3.3), pushed on the invitee's notify channel; undeliverable
 // invites retry 3x and land in the DLQ (FR-5.2).
+api.get('/costream/:id', wrap((req) => {
+  const session = costream.get(req.params.id);
+  if (!session) throw new ApiError(404, 'STREAM_NOT_FOUND', `Co-stream ${req.params.id} not found`, { session_id: req.params.id });
+  return { status: 200, body: session };
+}));
 api.post('/costream/:id/invite', guardWrite, auth.requireMember, wrap((req) => {
   const session = costream.get(req.params.id);
   if (!session) throw new ApiError(404, 'STREAM_NOT_FOUND', `Co-stream ${req.params.id} not found`, { session_id: req.params.id });

@@ -83,4 +83,23 @@ function start(body) {
 
 const get = (sessionId) => sessions.get(sessionId)?.response;
 
-module.exports = { start, get };
+// Live host disconnect (edge case 1): the same deterministic handoff as simulate_host_drop, applied
+// when a participant's presence socket closes. Chat room and composite URL are kept.
+function dropParticipant(sessionId, playerId) {
+  const entry = sessions.get(sessionId);
+  if (!entry || entry.response.status !== 'active' || !entry.response.active_participants.includes(playerId)) return null;
+  const prev = entry.response;
+  const active = prev.active_participants.filter((p) => p !== playerId);
+  const wasHost = prev.active_host === playerId;
+  const activeHost = wasHost ? (active[0] ?? null) : prev.active_host;
+  const handoff = wasHost ? active.length > 0 : prev.handoff_occurred;
+  const status = active.length > 0 ? 'active' : 'terminated';
+  const next = {
+    ...prev, status, active_host: activeHost, handoff_occurred: handoff, participant_count: active.length, active_participants: active,
+    signature: signDay2(sessionId, { active_host: activeHost, handoff_occurred: handoff, layout: prev.layout, participant_count: active.length, session_id: sessionId, status }),
+  };
+  entry.response = next;
+  return next;
+}
+
+module.exports = { start, get, dropParticipant };

@@ -90,6 +90,36 @@ def test_costream_invite_push_and_dlq():
     assert post("/api/v1/costream/nope/invite", {"player_id": "player-beta-1"}, host).json()["error"]["code"] == "STREAM_NOT_FOUND"
 
 
+def test_host_websocket_disconnect_hands_off_within_1_5s():
+    websocket = pytest.importorskip("websocket")
+    post("/audit/v1/costream/session", {"session_id": "cs-session-ws", "host_player_id": "player-alpha-1",
+                                        "participants": ["player-alpha-1", "player-alpha-2", "player-beta-1"], "layout": "grid_4"})
+    chat_ws = websocket.create_connection("ws://localhost:8080/ws/chat/chat-cs-session-ws", timeout=5)
+    host = websocket.create_connection("ws://localhost:8080/ws/costream/cs-session-ws/player-alpha-1", timeout=5)
+    assert json.loads(host.recv())["active_host"] == "player-alpha-1"
+    t0 = time.time()
+    host.close()
+    while time.time() - t0 < 1.5:
+        s = requests.get(BASE + "/api/v1/costream/cs-session-ws", timeout=5).json()
+        if s["active_host"] == "player-alpha-2":
+            break
+        time.sleep(0.05)
+    assert time.time() - t0 < 1.5
+    assert (s["active_host"], s["handoff_occurred"], s["participant_count"], s["status"]) == ("player-alpha-2", True, 2, "active")
+    assert s["chat_room_id"] == "chat-cs-session-ws" and s["composite_playback_url"].endswith("/costream/cs-session-ws/index.m3u8")
+    sysmsg = json.loads(chat_ws.recv())
+    chat_ws.close()
+    assert sysmsg["sender"] == "system" and sysmsg["seq"] == 1
+    # Non-host leaves: no handoff change, count drops; last one leaving terminates.
+    for pid in ["player-beta-1", "player-alpha-2"]:
+        ws = websocket.create_connection(f"ws://localhost:8080/ws/costream/cs-session-ws/{pid}", timeout=5)
+        ws.recv()
+        ws.close()
+        time.sleep(0.3)
+    s = requests.get(BASE + "/api/v1/costream/cs-session-ws", timeout=5).json()
+    assert (s["status"], s["active_host"], s["participant_count"]) == ("terminated", None, 0)
+
+
 def test_zz_api_rate_limit_then_recovers():
     first = requests.get(BASE + "/api/v1/ping", timeout=5)
     assert first.status_code == 200 and first.json() == {"pong": True}
