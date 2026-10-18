@@ -41,7 +41,7 @@ Method: every endpoint in D1 §5.1 and D2 §5.1 was probed live on the running s
 | FR-1.2 / FR-1.4 | League registration, standings with tie-breaks, h2h, NRR, clinched/eliminated | `/leagues`, `/standings/{id}` |
 | FR-2.2 | Roster setup, transfer/loan/release rules, audit history + loan auto-return | `/roster/setup`, `/roster/transfer`, `/roster/history/{id}` |
 | FR-2.3 / NFR-3 | Real checkout (stock reservation, mock gateway, signed PDF receipt), inventory | `/checkout` (501 stub), `/inventory/{id}` |
-| FR-5.1 / NFR-5 | RBAC JWT matrix + 7 probe routes (rate limit + `/api/v1/ping` ✅ done 13:52) | `/rbac-matrix`, `/rbac/*` |
+| FR-5.1 / NFR-5 | ✅ DONE 14:07 — RBAC matrix + 7 probes (full A/D table tested); rate limit + ping ✅ | — |
 | NFR-4 | Offline sync replay + conflict resolution; mobile offline queue | `/offline-sync` |
 | FR-2.1 | Club portal (venue, socials, staff, white-label tenant branding) | — |
 | Small | ✅ `tie_break_order` repeats rejected; ✅ `/inventory/{id}`; `COVERAGE.json` Day 1 areas still 0.0 | — |

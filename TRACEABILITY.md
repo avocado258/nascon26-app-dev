@@ -9,7 +9,7 @@
 | FR-2.1  | Club profiles & tenant isolation     | backend/clubs/                | tests/test_clubs.py              | TODO   |
 | FR-2.2  | Roster/transfer/loan                 | backend/roster/               | tests/test_roster.py             | TODO   |
 | FR-2.3  | Merchandise store + concurrency      | backend/store/                | tests/test_checkout.py           | TODO   |
-| FR-5.1  | 5-tier RBAC                          | backend/rbac/                 | tests/test_rbac.py               | TODO   |
+| FR-5.1  | 5-tier RBAC                          | backend/src/rbac/policy.js, backend/src/auth/jwt.js | tests/test_rbac_matrix.py | DONE (policy-as-code table; full A/D matrix, 401 for missing/tampered/alg:none) |
 | NFR-3   | Concurrency correctness              | backend/store/                | tests/test_checkout_concurrency.py | TODO |
 | NFR-4   | Offline tolerance                    | mobile/, backend/offline/     | tests/test_offline_sync.py       | TODO   |
 | NFR-5   | Security (OWASP, RBAC, rate limit)   | backend/src/security/rateLimit.js, backend/src/auth/ | tests/test_zz_followups.py::test_zz_api_rate_limit_then_recovers | PARTIAL (/api/v1 rate limit + JWT pinning; RBAC matrix TODO) |
