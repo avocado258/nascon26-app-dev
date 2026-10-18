@@ -1,0 +1,30 @@
+# MediaMTX 1.9.x — RTMP ingest :1935, HLS :8888, WebRTC WHIP/WHEP :8889, control API :9997 (internal).
+logLevel: info
+
+api: yes
+apiAddress: :9997
+
+# Every publish/read is authorised by the backend so revoked stream keys are refused (KEY_REVOKED).
+authMethod: http
+authHTTPAddress: http://backend:8080/internal/media/auth
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+rtmp: yes
+rtmpAddress: :1935
+
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: '*'
+hlsAlwaysRemux: yes
+hlsVariant: lowLatency
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigin: '*'
+webrtcLocalUDPAddress: :8189
+
+paths:
+  all_others:

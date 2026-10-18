@@ -6,7 +6,10 @@ const pool = require('./db/pool');
 const resetRouter = require('./routes/reset');
 const sportsRoutes = require('./routes/sports');
 const fixturesRoutes = require('./routes/fixtures');
+const eventsRoutes = require('./routes/events');
+const mediaRoutes = require('./routes/media');
 const { seedBaseline } = require('./seed');
+const { redisPing, mediaReady } = require('./utils/deps');
 const { errorBody, sendError } = require('./utils/errors');
 
 const app = express();
@@ -14,22 +17,23 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use('/audit/v1/sports', sportsRoutes);
 app.use('/audit/v1/fixtures', fixturesRoutes);
+app.use('/audit/v1/events', eventsRoutes.events);
+app.use('/audit/v1/score', eventsRoutes.score);
+app.use('/internal/media', mediaRoutes);
 
 
-let dbReady = false;
 let seeded = false;
 
 app.get('/health', async (req, res) => {
-  try {
-    await pool.query('SELECT 1');
-    dbReady = true;
-    if (dbReady && seeded) {
-      return res.status(200).json({ status: 'ok' });
-    }
-    return res.status(503).json({ status: 'not_ready' });
-  } catch (err) {
-    return res.status(503).json({ status: 'db_unreachable' });
+  const [db, redis, media] = await Promise.all([
+    pool.query('SELECT 1').then(() => true, () => false),
+    redisPing(),
+    mediaReady(),
+  ]);
+  if (db && redis && media && seeded) {
+    return res.status(200).json({ status: 'ok' });
   }
+  return res.status(503).json({ status: 'not_ready', checks: { db, redis, media, seeded } });
 });
 
 app.use('/audit/v1/reset', resetRouter(() => { seeded = true; }));

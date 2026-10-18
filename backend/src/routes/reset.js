@@ -1,6 +1,7 @@
 const express = require('express');
 const { seedBaseline } = require('../seed');
-const { sendError } = require('../utils/errors');
+const { DEFAULT_STOCK } = require('../state/registry');
+const { ApiError, sendError } = require('../utils/errors');
 
 const DEFAULT_SPORTS = ['football', 'basketball', 'cricket', 'esports'];
 
@@ -9,9 +10,16 @@ module.exports = function (markSeeded) {
 
   router.post('/', async (req, res) => {
     try {
-      const seed = req.body?.seed ?? 42;
-      const stock = req.body?.stock ?? { 'var-jersey-001-M': 1, 'var-jersey-001-L': 5 };
-      await seedBaseline();
+      const body = req.body || {};
+      const seed = body.seed ?? 42;
+      const stock = body.stock ?? DEFAULT_STOCK;
+      const fields = [];
+      if (!Number.isInteger(seed)) fields.push('seed');
+      if (stock === null || typeof stock !== 'object' || Array.isArray(stock)
+        || !Object.values(stock).every((v) => Number.isInteger(v) && v >= 0)) fields.push('stock');
+      if (fields.length) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid reset body', { fields });
+
+      await seedBaseline({ seed, stock });
 
       markSeeded();
 
