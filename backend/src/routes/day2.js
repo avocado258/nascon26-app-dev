@@ -65,6 +65,18 @@ api.get('/products/pinned', wrap(() => {
   const p = registry.state.products.get('prod-jersey-001');
   return { status: 200, body: { product_id: p.product_id, name: p.name, variant_id: v.variant_id, size: v.size, price_minor: v.price_minor, currency: v.currency, stock: v.stock } };
 }));
+api.get('/players/:id', wrap((req) => {
+  const p = registry.state.players.get(req.params.id);
+  if (!p) throw new ApiError(404, 'PLAYER_NOT_FOUND', `Player ${req.params.id} not found`, { player_id: req.params.id });
+  const club = registry.state.clubs.get(p.club_id);
+  return { status: 200, body: { player_id: p.player_id, name: p.name, club: club.name, club_id: p.club_id, tenant_id: p.tenant_id } };
+}));
+api.get('/clubs/:id', wrap((req) => {
+  const c = registry.state.clubs.get(req.params.id);
+  if (!c) throw new ApiError(404, 'NOT_FOUND', `Club ${req.params.id} not found`, { club_id: req.params.id });
+  const roster = [...registry.state.players.values()].filter((p) => p.club_id === c.club_id).map((p) => ({ player_id: p.player_id, name: p.name }));
+  return { status: 200, body: { club_id: c.club_id, name: c.name, tenant_id: c.tenant_id, roster } };
+}));
 api.get('/cart', auth.requireMember, wrap((req) => ({ status: 200, body: guest.activeCart(req.user.user_id) })));
 
 // Live chat: guests are refused (403) before auth; members are moderated, sequenced and broadcast.

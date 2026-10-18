@@ -68,7 +68,7 @@ Tiers are ordered by points per hour. Within a tier, packages own disjoint files
 - Emits `match.updated` on the in-process bus (P1.6) after every append.
 - Done: match_end/postpone on `match-m1` changes the projection; guest bearer → 403.
 
-### Tier 1 — Day 2 contracts (parallel, target ≤ 13:15, push for W3)
+### Tier 1 — Day 2 contracts ✅ DONE `dc96b7f` 12:08 (160 API tests incl. DAY2 signature recomputation; gate /health 12 s, grid 16 s). W3 (12:45–13:45) still needs its own push.
 
 **P1.1 Stream keys (`D2:320-372`).** Files: `backend/src/streaming/*`, `backend/src/routes/stream.js`, `/internal/media/auth`.
 - Validate `action ∈ {generate, rotate, revoke}`, `player_id` required, `label` 1–64 (default `"default"`), `stream_key_override` optional → 400. Unknown player → 404 `PLAYER_NOT_FOUND`. Revoke with no key → 404 `STREAM_NOT_FOUND`.
@@ -109,7 +109,7 @@ Tiers are ordered by points per hour. Within a tier, packages own disjoint files
 - `GET /metrics` `text/plain; version=0.0.4` with HELP/TYPE lines for `nascon_active_ws_connections`, `nascon_active_streams_total`, `nascon_stream_bitrate_kbps`, `nascon_dlq_depth`, `nascon_qr_scans_total`.
 - `DELETE /audit/v1/privacy/user/:user_id`: unknown → 404 `PLAYER_NOT_FOUND`; anonymize the name/email, revoke the user's JWTs and linked guest tokens → 200 `{user_id, status:"anonymized", pii_retained:false, tokens_wiped:true}`.
 
-### Tier 2 — Guest Web Player (target ≤ 13:40) — frontend 20% + Selenium
+### Tier 2 — Guest Web Player ✅ DONE (Selenium 6/6 ×3 runs, chrome+firefox in parallel; progressive sign-in → cart merge → held chat verified in browser)
 
 **P2.1 `/web/*`.** Files: `backend/src/web/` (static HTML/CSS/JS), `backend/src/routes/web.js`. Serve `hls.js` from `node_modules` (no CDN; runtime has no internet).
 - Routes: `/web/matches/:id/{preview,live,vod,notice}`, `/web/players/:id`, `/web/clubs/:id`, `/web/costream/:id`.
@@ -120,7 +120,7 @@ Tiers are ordered by points per hour. Within a tier, packages own disjoint files
 
 ### Tier 3 — QA harness + CI (target ≤ 13:55)
 
-**P3.1 Selenium** `tests/selenium/test_guest_grid.py`: `webdriver.Remote("http://localhost:4444/wd/hub")`, browsers chrome and firefox; base URL `http://backend:8080` (inside the grid network); the 3 tests from `D2:755-763`; run `pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml`. Add `pytest-xdist` and `selenium` to `tests/requirements.txt`.
+**P3.1 Selenium** ✅ `tests/selenium/test_guest_grid.py` (each test uses its own match where it mutates state, so parallel workers never race): `webdriver.Remote("http://localhost:4444/wd/hub")`, browsers chrome and firefox; base URL `http://backend:8080` (inside the grid network); the 3 tests from `D2:755-763`; run `pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml`. Add `pytest-xdist` and `selenium` to `tests/requirements.txt`.
 **P3.2 k6** `tests/k6_load.js` verbatim from `D2:795-846`. Run `docker run --rm --network host -v "$PWD/tests:/tests" grafana/k6:0.54.0 run --summary-export=/tests/reports/k6-summary.json /tests/k6_load.js`; must pass the thresholds.
 **P3.3 Appium** `tests/appium/test_mobile_deeplink.py`: Appium-Python-Client against `http://localhost:4723`; fire the two deep links (`D2:783-784`) via `mobile: deepLink`; assert the foreground activity; skip with a reason if `/status` is unreachable; JUnit → `tests/reports/appium-report.xml`.
 **P3.4 CI** `.github/workflows/autograde.yml` on push to main: checkout (fetch-depth 0) → ancestry check vs `3001bc2` → `docker compose up -d --build` with `DAY1_SALT`/`DAY2_SALT` from repo secrets (fallback dummy) → wait for `/health` and grid ready → `./run_tests.sh` → Selenium → k6 → upload `tests/reports/`.

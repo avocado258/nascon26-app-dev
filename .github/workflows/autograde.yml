@@ -1,0 +1,68 @@
+name: autograde
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  autograde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DAY1_SALT: ${{ secrets.DAY1_SALT || 'ci-day1-salt' }}
+      DAY2_SALT: ${{ secrets.DAY2_SALT || 'ci-day2-salt' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Phase I commit ancestry
+        run: git merge-base --is-ancestor 3001bc29b1afd9716fb8c9e9df559224a4eb82ac HEAD
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: pip install -r tests/requirements.txt
+
+      - name: Start full stack
+        run: docker compose up -d --build
+
+      - name: Wait for /health and Selenium Grid (3 nodes)
+        run: |
+          for i in $(seq 1 60); do curl -sf http://localhost:8080/health && break; sleep 2; done
+          curl -sf http://localhost:8080/health
+          for i in $(seq 1 60); do
+            curl -s http://localhost:4444/status | python -c "import sys,json; v=json.load(sys.stdin)['value']; sys.exit(0 if v['ready'] and len(v['nodes']) >= 3 else 1)" && break
+            sleep 2
+          done
+          curl -s http://localhost:4444/status | python -c "import sys,json; v=json.load(sys.stdin)['value']; print('grid ready', v['ready'], 'nodes', len(v['nodes'])); sys.exit(0 if v['ready'] and len(v['nodes']) >= 3 else 1)"
+
+      - name: Unit tests (Phase I + II)
+        run: node --test tests/unit/*.test.js
+
+      - name: Backend contract probes
+        run: pytest tests/ --ignore=tests/selenium --ignore=tests/appium --junitxml=tests/reports/contract-report.xml
+
+      - name: Selenium Grid 4 guest suite
+        run: pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml
+
+      - name: k6 load smoke (500 viewers + 50 chat posters)
+        run: docker run --rm --network host -v "$PWD/tests:/tests" grafana/k6:0.54.0 run --summary-export=/tests/reports/k6-summary.json /tests/k6_load.js
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: tests/reports/
+
+      - name: Backend logs on failure
+        if: failure()
+        run: docker compose logs --tail 200 backend mediamtx

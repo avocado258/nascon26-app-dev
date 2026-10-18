@@ -11,6 +11,7 @@ const mediaRoutes = require('./routes/media');
 const day2 = require('./routes/day2');
 const qrRoutes = require('./routes/qr');
 const hub = require('./realtime/hub');
+const webRoutes = require('./routes/web');
 const { seedBaseline } = require('./seed');
 const { redisPing, mediaReady } = require('./utils/deps');
 const { errorBody, sendError } = require('./utils/errors');
@@ -28,6 +29,8 @@ app.use('/audit/v1', day2.audit);
 app.use('/api/v1', day2.api);
 app.use('/q', qrRoutes.short);
 app.get('/metrics', day2.metrics);
+app.use('/web', webRoutes);
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 
 let seeded = false;

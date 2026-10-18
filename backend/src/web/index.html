@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NaSCon Live</title>
+  <link rel="stylesheet" href="/web/static/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <span class="brand" aria-label="NaSCon Live">NaSCon <b>Live</b></span>
+    <span class="status-pill" id="conn-status" role="status" aria-live="polite">Connecting…</span>
+    <span class="cart" aria-live="polite">
+      <span aria-hidden="true">🛒</span>
+      <span class="visually-hidden">Items in guest cart:</span>
+      <span data-testid="guest-cart-count" id="guest-cart-count">0</span>
+    </span>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section id="view-match" class="layout" hidden>
+      <div class="stage">
+        <div class="video-wrap">
+          <video data-testid="guest-video-player" id="video" controls muted playsinline preload="none"
+                 aria-label="Live match video player"></video>
+          <p class="video-note" id="video-note" role="status">Waiting for the live stream…</p>
+          <div class="overlay" aria-hidden="false">
+            <span class="badge" id="home-badge" aria-label="Home club">HOME</span>
+            <span data-testid="live-score-banner" id="live-score-banner" class="score" role="status" aria-live="polite" aria-label="Live score">– - –</span>
+            <span class="badge" id="away-badge" aria-label="Away club">AWAY</span>
+          </div>
+        </div>
+        <h1 id="match-title" class="title">Match</h1>
+        <p id="match-state" class="state"></p>
+      </div>
+
+      <aside class="side">
+        <div data-testid="pinned-merch-card" id="pinned-merch-card" class="card merch" aria-labelledby="merch-name">
+          <p class="eyebrow">Pinned merchandise</p>
+          <h2 id="merch-name">Club Jersey 2026</h2>
+          <p id="merch-meta" class="muted">Size L · PKR 4500.00</p>
+          <div class="row">
+            <button data-testid="add-to-guest-cart-btn" id="add-to-guest-cart-btn" class="btn primary" type="button">Add to cart</button>
+            <button id="checkout-btn" class="btn" type="button">Proceed to Checkout</button>
+          </div>
+          <p id="cart-msg" class="muted" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="card chat" aria-labelledby="chat-heading">
+          <h2 id="chat-heading">Live chat</h2>
+          <ul data-testid="chat-message-list" id="chat-message-list" class="chat-list" tabindex="0" aria-label="Chat messages" aria-live="polite">
+            <li class="muted empty">No messages yet.</li>
+          </ul>
+          <form id="chat-form" class="chat-form" autocomplete="off">
+            <label for="chat-input-field" class="visually-hidden">Chat message</label>
+            <input data-testid="chat-input-field" id="chat-input-field" type="text" maxlength="280" placeholder="Say something…">
+            <button data-testid="chat-send-btn" id="chat-send-btn" class="btn primary" type="submit">Send</button>
+          </form>
+        </div>
+      </aside>
+    </section>
+
+    <section id="view-profile" class="card profile" hidden aria-live="polite">
+      <p class="eyebrow" id="profile-kind"></p>
+      <h1 id="profile-title" class="title"></h1>
+      <dl id="profile-details" class="details"></dl>
+    </section>
+  </main>
+
+  <div data-testid="progressive-auth-modal" id="progressive-auth-modal" class="modal" role="dialog" aria-modal="true"
+       aria-labelledby="auth-title" hidden>
+    <div class="modal-card">
+      <h2 id="auth-title">Sign in to continue</h2>
+      <p id="auth-reason" class="muted">Sign in to chat or check out. Your cart and video position are kept.</p>
+      <form id="auth-form">
+        <label for="auth-email">Email</label>
+        <input id="auth-email" type="email" autocomplete="username" required>
+        <label for="auth-password">Password</label>
+        <input id="auth-password" type="password" autocomplete="current-password" required>
+        <p id="auth-error" class="error" role="alert"></p>
+        <div class="row">
+          <button class="btn primary" type="submit">Sign in</button>
+          <button class="btn" type="button" id="auth-cancel">Not now</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/web/vendor/hls.min.js" defer></script>
+  <script src="/web/static/app.js" defer></script>
+</body>
+</html>
